@@ -113,6 +113,38 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        board.setViewingPerspective(side);
+        for (int c = 0; c < board.size(); c++) {
+            int merged = -1;
+            for (int r = board.size() - 2; r >= 0; r--) {
+                Tile tile = board.tile(c, r);
+                if (tile == null) {
+                    continue;
+                }
+
+                int moveTileCount = 0;
+                for (int i = r + 1; i < board.size(); i++) {
+                    if (i == merged) {
+                        continue;
+                    }
+                    if (board.tile(c, i) == null) {
+                        moveTileCount++;
+                    }
+                    else if (board.tile(c, i).value() == tile.value()) {
+                        moveTileCount++;
+                        merged = i;
+                    }
+                }
+
+                if (moveTileCount > 0) {
+                    if (board.move(c, r + moveTileCount, tile)) {
+                        score += tile.value() * 2;
+                    }
+                    changed = true;
+                }
+            }
+        }
+        board.setViewingPerspective(Side.NORTH);
 
         checkGameOver();
         if (changed) {
@@ -120,6 +152,7 @@ public class Model extends Observable {
         }
         return changed;
     }
+
 
     /** Checks if the game is over and sets the gameOver variable
      *  appropriately.
@@ -138,6 +171,14 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        int n = b.size();
+        for (int c = 0; c < n; c++) {
+            for (int r = 0; r < n; r++) {
+                if (b.tile(c, r) == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +189,18 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        int n = b.size();
+        for (int c = 0; c < n; c++) {
+            for (int r = 0; r < n; r++) {
+                Tile tile = b.tile(c, r);
+                if (tile == null) {
+                    continue;
+                }
+                if (tile.value() == MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -159,9 +212,46 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        int n = b.size();
+        for (int c = 0; c < n; c++) {
+            for (int r = 0; r < n; r++) {
+                Tile tile = b.tile(c, r);
+                if (tile == null || equalAdjacentTileExists(b, c, r)) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
+    public static boolean equalAdjacentTileExists(Board b, int tileCol, int tileRow) {
+        Tile tile = b.tile(tileCol, tileRow);
 
+        // up and down adjacent
+        for (int i = -1; i <= 1; i++) {
+            if (i == 0 || tileRow + i < 0 || tileRow + i >= b.size()) {
+                continue;
+            }
+
+            Tile adjacentTile = b.tile(tileCol, tileRow + i);
+            if (adjacentTile != null && adjacentTile.value() == tile.value()) {
+                return true;
+            }
+        }
+
+        // left and right adjacent
+        for (int i = -1; i <= 1; i++) {
+            if (i == 0 || tileCol + i < 0 || tileCol + i >= b.size()) {
+                continue;
+            }
+
+            Tile adjacentTile = b.tile(tileCol + i, tileRow);
+            if (adjacentTile != null && adjacentTile.value() == tile.value()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     @Override
      /** Returns the model as a string, used for debugging. */
