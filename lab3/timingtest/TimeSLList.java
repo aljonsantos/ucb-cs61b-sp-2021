@@ -34,11 +34,15 @@ public class TimeSLList {
             for (int j = 0; j < i; j++) {
                 lst.addFirst(j);
             }
+
+            int m = 10000;
             Stopwatch sw = new Stopwatch();
-            lst.getLast();
+            for (int k = 0; k < m; k++) {
+                lst.getLast();
+            }
             times.addLast(sw.elapsedTime());
 
-            ops.addLast(i);
+            ops.addLast(m);
         }
 
         printTimingTable(ns, times, ops);
