@@ -110,14 +110,25 @@ public class ArrayDeque<T> {
     }
 
     public T get(int index) {
-        int p = first;
-        do {
-            if (p == index) {
+        int p = first, i = 0;
+        while (p != last) {
+            if (i == index) {
                 return items[p];
             }
             p = (p + 1) % items.length;
-        } while (p != last);
+            i++;
+        }
+        if (i == index) {
+            return items[p];
+        }
 
         return null;
+    }
+
+    public static void main(String[] args) {
+        ArrayDeque<Integer> lst = new ArrayDeque<>();
+        lst.addFirst(0);
+        lst.addFirst(1);
+        System.out.println(lst.get(0));
     }
 }
