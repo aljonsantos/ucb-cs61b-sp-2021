@@ -5,27 +5,24 @@ public class ArrayDeque<T> {
     private int first;
     private int last;
     private int size;
+    private static final int DEFAULT_CAPACITY = 8;
 
     public ArrayDeque() {
-        this.items = (T[]) new Object[4];
-        this.first = -1;
-        this.last = -1;
+        this.items = (T[]) new Object[DEFAULT_CAPACITY];
+        this.first = DEFAULT_CAPACITY / 2;
+        this.last = DEFAULT_CAPACITY / 2;
         this.size = 0;
     }
 
     private void resize(int capacity) {
         T[] arr = (T[]) new Object[capacity];
-        int p = first, i = 0;
-
-        while (p != last) {
+        for (int i = 0, p = first; i < size; i++) {
             arr[i] = items[p];
             p = (p + 1) % items.length;
-            i++;
         }
 
-        arr[i] = items[p];
         first = 0;
-        last = i;
+        last = size - 1;
         items = arr;
     }
 
@@ -34,10 +31,7 @@ public class ArrayDeque<T> {
             resize(items.length * 2);
         }
 
-        if (isEmpty()) {
-            first = 0;
-            last = 0;
-        } else {
+        if (!isEmpty()) {
             first = (first - 1) < 0 ? items.length - 1 : first - 1;
         }
 
@@ -50,10 +44,7 @@ public class ArrayDeque<T> {
             resize(items.length * 2);
         }
 
-        if (isEmpty()) {
-            first = 0;
-            last = 0;
-        } else {
+        if (!isEmpty()) {
             last = (last + 1) % items.length;
         }
 
@@ -71,12 +62,10 @@ public class ArrayDeque<T> {
     }
 
     public void printDeque() {
-        int p = first;
-        while (p != last) {
+        for (int i = 0, p = first; i < size; i++) {
             System.out.print(items[p] + " ");
             p = (p + 1) % items.length;
         }
-        System.out.println(items[p]);
     }
 
     public T removeFirst() {
@@ -110,25 +99,12 @@ public class ArrayDeque<T> {
     }
 
     public T get(int index) {
-        int p = first, i = 0;
-        while (p != last) {
+        for (int i = 0, p = first; i < items.length; i++) {
             if (i == index) {
                 return items[p];
             }
             p = (p + 1) % items.length;
-            i++;
         }
-        if (i == index) {
-            return items[p];
-        }
-
         return null;
-    }
-
-    public static void main(String[] args) {
-        ArrayDeque<Integer> lst = new ArrayDeque<>();
-        lst.addFirst(0);
-        lst.addFirst(1);
-        System.out.println(lst.get(0));
     }
 }
