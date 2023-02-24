@@ -8,9 +8,9 @@ public class LinkedListDeque<T> implements Iterable<T> {
     private int size;
 
     public class Node {
-        public T item;
-        public Node next;
-        public Node prev;
+        T item;
+        Node next;
+        Node prev;
 
         public Node(T item, Node prev, Node next) {
             this.item = item;
