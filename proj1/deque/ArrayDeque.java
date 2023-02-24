@@ -76,7 +76,9 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         }
 
         T item = items[first];
-        first = (first + 1) % items.length;
+        if (size > 1) {
+            first = (first + 1) % items.length;
+        }
         size--;
         return item;
     }
@@ -86,12 +88,14 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             return null;
         }
 
-        if (size < items.length / 4) {
+        if (size < items.length / 4 ) {
             resize(items.length / 4);
         }
 
         T item = items[last];
-        last = (last - 1) < 0 ? items.length - 1 : last - 1;
+        if (size > 1) {
+            last = (last - 1) < 0 ? items.length - 1 : last - 1;
+        }
         size--;
         return item;
     }
@@ -138,19 +142,34 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             return false;
         }
 
-        if (o instanceof ArrayDeque) {
-            ArrayDeque<T> other = (ArrayDeque<T>) o;
+        if (o instanceof Deque) {
+            Deque<T> other = (ArrayDeque<T>) o;
             if (other.size() != size) {
                 return false;
             }
             for (int i = 0; i < size; i++) {
-                if (other.get(i) != this.get(i)) {
+                if (this.get(i).equals(other.get(i))) {
                     return false;
                 }
             }
             return true;
         }
         return false;
+    }
+
+    public static void main(String[] args) {
+        ArrayDeque<Integer> ad1 = new ArrayDeque<>();
+        ad1.addLast(0);
+        ad1.addFirst(1);
+        System.out.println(ad1.removeFirst());
+        System.out.println(ad1.get(0));
+        System.out.println(ad1.removeFirst());
+        ad1.addFirst(5);
+
+//        ad1.addLast(3);
+        System.out.println(ad1.removeLast());
+
+        ad1.printDeque();
     }
 
 }

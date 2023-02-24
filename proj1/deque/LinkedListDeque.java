@@ -7,7 +7,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     private final Node sentinel;
     private int size;
 
-    public class Node {
+    private class Node {
         T item;
         Node next;
         Node prev;
@@ -85,6 +85,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
                 return p.item;
             }
             p = p.next;
+            i++;
         }
         return null;
     }
@@ -96,7 +97,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         return getRecursiveHelper(sentinel.next, index);
     }
 
-    public T getRecursiveHelper(Node p, int index) {
+    private T getRecursiveHelper(Node p, int index) {
         if (index == 0) {
             return p.item;
         }
@@ -135,19 +136,29 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             return false;
         }
 
-        if (o instanceof LinkedListDeque) {
-            LinkedListDeque<T> other = (LinkedListDeque<T>) o;
+        if (o instanceof Deque) {
+            Deque<T> other = (LinkedListDeque<T>) o;
             if (other.size() != size) {
                 return false;
             }
             for (int i = 0; i < size; i++) {
-                if (other.get(i) != this.get(i)) {
+                if (this.get(i).equals(other.get(i))) {
                     return false;
                 }
             }
             return true;
         }
         return false;
+    }
+
+    public static void main(String[] args) {
+        LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
+        lld1.addFirst(0);
+        System.out.println(lld1.get(0));
+        lld1.addLast(2);
+        System.out.println(lld1.get(1));
+
+        lld1.printDeque();
     }
 
 }
