@@ -142,7 +142,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
                 return false;
             }
             for (int i = 0; i < size; i++) {
-                if (this.get(i).equals(other.get(i))) {
+                if (!this.get(i).equals(other.get(i))) {
                     return false;
                 }
             }
@@ -150,15 +150,4 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         }
         return false;
     }
-
-    public static void main(String[] args) {
-        LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
-        lld1.addFirst(0);
-        System.out.println(lld1.get(0));
-        lld1.addLast(2);
-        System.out.println(lld1.get(1));
-
-        lld1.printDeque();
-    }
-
 }

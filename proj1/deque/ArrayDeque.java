@@ -111,20 +111,23 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     }
 
     private class ArrayDequeIterator implements Iterator<T> {
-        int c;
+        int i;
+        int p;
 
         public ArrayDequeIterator() {
-            c = 0;
+            i = 0;
+            p = first;
         }
 
         @Override
         public boolean hasNext() {
-            return c < size;
+            return i < size;
         }
 
         public T next() {
-            T next =  items[c];
-            c++;
+            T next =  items[p];
+            i++;
+            p = (p + 1) % items.length;
             return next;
         }
     }
@@ -148,7 +151,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
                 return false;
             }
             for (int i = 0; i < size; i++) {
-                if (this.get(i).equals(other.get(i))) {
+                if (!this.get(i).equals(other.get(i))) {
                     return false;
                 }
             }
@@ -156,20 +159,4 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         }
         return false;
     }
-
-    public static void main(String[] args) {
-        ArrayDeque<Integer> ad1 = new ArrayDeque<>();
-        ad1.addLast(0);
-        ad1.addFirst(1);
-        System.out.println(ad1.removeFirst());
-        System.out.println(ad1.get(0));
-        System.out.println(ad1.removeFirst());
-        ad1.addFirst(5);
-
-//        ad1.addLast(3);
-        System.out.println(ad1.removeLast());
-
-        ad1.printDeque();
-    }
-
 }

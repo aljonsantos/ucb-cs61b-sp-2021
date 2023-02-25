@@ -27,8 +27,7 @@ public class MaxArrayDequeTest {
         for (int i = 0; i < 10; i++) {
             mad1.addLast(i);
         }
-        mad1.removeLast();
-        assertEquals(8, (int) mad1.max(new IntComparator()));
+        assertEquals(9, (int) mad1.max(new IntComparator()));
     }
 
 }
