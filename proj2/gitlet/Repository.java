@@ -1,6 +1,8 @@
 package gitlet;
 
 import java.io.File;
+import java.util.List;
+
 import static gitlet.Utils.*;
 
 // TODO: any imports you need here
@@ -24,6 +26,65 @@ public class Repository {
     public static final File CWD = new File(System.getProperty("user.dir"));
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
+    static CommitTree tree;
+    static Commit head;
 
     /* TODO: fill in the rest of this class. */
+
+    public static void readCommits() {
+        if (GITLET_DIR.exists()) {
+            tree = readObject(CommitTree.TREE, CommitTree.class);
+            head = tree.head();
+        }
+    }
+
+
+    public static void initialize() {
+        if (isGitletInitialized()) {
+            Utils.exitWithMessage("A Gitlet version-control system already exists in the current directory.");
+        }
+
+        GITLET_DIR.mkdir();
+
+        StagingArea.STAGING_DIR.mkdir();
+        StagingArea.ADDITION_DIR.mkdir();
+        StagingArea.REMOVAL_DIR.mkdir();
+
+        CommitTree.COMMITS_DIR.mkdir();
+        Blob.BLOBS_DIR.mkdir();
+
+        tree = new CommitTree();
+        tree.save();
+    }
+
+
+
+    public static void commit(String message) {
+        tree.createCommit(message);
+        tree.save();
+    }
+
+    public static void log() {
+        CommitTree.printLogFrom(head);
+    }
+
+    public static void globalLog() {
+        CommitTree.printGlobalLog();
+    }
+
+    public static boolean isGitletInitialized() {
+        return Repository.GITLET_DIR.exists();
+    }
+
+
+
+
+
+
+
+
+//    private static boolean isFileIn(File dir, String filename) {
+//        List<String> files = plainFilenamesIn(dir);
+//        return files != null && files.contains(filename);
+//    }
 }

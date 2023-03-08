@@ -1,14 +1,6 @@
 package gitlet;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
@@ -86,6 +78,22 @@ class Utils {
      *  directory designated by FILE also contains a directory named .gitlet. */
     static boolean restrictedDelete(String file) {
         return restrictedDelete(new File(file));
+    }
+
+    static void deleteFile(File dir, String filename) {
+        File f = join(dir, filename);
+        if (f.exists()) {
+            f.delete();
+        }
+    }
+
+    static void deleteAllFilesIn(File dir) {
+        List<String> filenames = plainFilenamesIn(dir);
+        if (filenames != null) {
+            for (String file : filenames) {
+                deleteFile(dir, file);
+            }
+        }
     }
 
     /* READING AND WRITING FILE CONTENTS */
@@ -221,7 +229,6 @@ class Utils {
     }
 
 
-
     /* MESSAGES AND ERROR REPORTING */
 
     /** Return a GitletException whose message is composed from MSG and ARGS as
@@ -236,4 +243,10 @@ class Utils {
         System.out.printf(msg, args);
         System.out.println();
     }
+
+    static void exitWithMessage(String message) {
+        System.out.println(message);
+        System.exit(0);
+    }
+
 }
