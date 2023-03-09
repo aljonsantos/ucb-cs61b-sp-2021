@@ -19,9 +19,9 @@ public class StagingArea {
             exitWithMessage("File does not exist.");
         }
 
-        boolean isFileIdenticalToHeads = new Blob(f).equals(head.getBlob(filename));
+        boolean isFileIdenticalToHeads = new Blob(f).hash().equals(head.blobs().get(filename));
         if (!isFileIdenticalToHeads) {
-            System.out.println("added: " + filename);
+//            System.out.println("added: " + filename);
             stageFile(filename);
             unstageFileForRemoval(filename);
         }
@@ -67,8 +67,8 @@ public class StagingArea {
     }
 
     static void clear() {
-        deleteAllFilesIn(ADDITION_DIR);
-        deleteAllFilesIn(REMOVAL_DIR);
+        deleteFilesIn(ADDITION_DIR);
+        deleteFilesIn(REMOVAL_DIR);
     }
 
     static List<String> getFilesForAddtion() {

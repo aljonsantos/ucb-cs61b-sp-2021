@@ -16,7 +16,7 @@ public class Main {
             Utils.exitWithMessage("Please enter a command.");
         }
 
-        Repository.readCommits();
+        Repository.readCommitTree();
 
         String command = args[0];
 //        String filename = args[1];
@@ -31,7 +31,6 @@ public class Main {
                 // `add [filename]` command
                 validateRepository();
                 validateOperands(1, numOfOperands);
-
                 String filename = args[1];
 //                System.out.println(filename);
                 StagingArea.add(filename);
@@ -77,6 +76,26 @@ public class Main {
 //                System.out.println("log");
 //                Repository.globalLog();
                 CommitTree.find(message);
+                break;
+            case "status":
+                validateRepository();
+                validateOperands(0, numOfOperands);
+//                System.out.println("log");
+                Repository.status();
+                break;
+            case "checkout":
+                validateRepository();
+//                validateOperands(1, numOfOperands);
+//                System.out.println("log");
+                Repository.checkout(args);
+
+                break;
+            case "branch":
+                validateRepository();
+                validateOperands(1, numOfOperands);
+
+                String branch = args[1];
+                Repository.branch(branch);
                 break;
             case "viewfile":
                 String hash = args[1];

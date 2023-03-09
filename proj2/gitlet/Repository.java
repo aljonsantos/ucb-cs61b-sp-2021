@@ -31,7 +31,7 @@ public class Repository {
 
     /* TODO: fill in the rest of this class. */
 
-    public static void readCommits() {
+    public static void readCommitTree() {
         if (GITLET_DIR.exists()) {
             tree = readObject(CommitTree.TREE, CommitTree.class);
             head = tree.head();
@@ -50,17 +50,18 @@ public class Repository {
         StagingArea.ADDITION_DIR.mkdir();
         StagingArea.REMOVAL_DIR.mkdir();
 
-        CommitTree.COMMITS_DIR.mkdir();
+        Commit.COMMITS_DIR.mkdir();
         Blob.BLOBS_DIR.mkdir();
 
         tree = new CommitTree();
+        tree.initialize();
         tree.save();
     }
 
 
 
     public static void commit(String message) {
-        tree.createCommit(message);
+        tree.newCommit(message);
         tree.save();
     }
 
@@ -70,6 +71,39 @@ public class Repository {
 
     public static void globalLog() {
         CommitTree.printGlobalLog();
+    }
+
+
+
+    public static void status() {
+        tree.printStatus();
+    }
+
+    public static void checkout(String[] args) {
+        String filename, hash, branch;
+
+        if (args.length == 3 && args[1].equals("--")) {
+            filename = args[2];
+            tree.chekoutFile(filename);
+        }
+        else if (args.length == 4 && args[2].equals("--")) {
+            hash = args[1];
+            filename = args[3];
+            tree.checkoutFileFromCommit(hash, filename);
+        }
+        else if (args.length == 2) {
+            branch = args[1];
+            tree.checkoutBranch(branch);
+            tree.save();
+        }
+        else {
+            exitWithMessage("Incorrect Operands.");
+        }
+    }
+
+    public static void branch(String branch) {
+        tree.newBranch(branch);
+        tree.save();
     }
 
     public static boolean isGitletInitialized() {

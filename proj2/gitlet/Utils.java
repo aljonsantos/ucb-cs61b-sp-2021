@@ -87,12 +87,18 @@ class Utils {
         }
     }
 
-    static void deleteAllFilesIn(File dir) {
+    static void deleteFilesIn(File dir) {
         List<String> filenames = plainFilenamesIn(dir);
         if (filenames != null) {
             for (String file : filenames) {
                 deleteFile(dir, file);
             }
+        }
+    }
+
+    static void deleteFilesIn(File dir, List<String> filenames) {
+        for (String file : filenames) {
+            deleteFile(dir, file);
         }
     }
 

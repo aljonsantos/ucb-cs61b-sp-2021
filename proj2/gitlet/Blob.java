@@ -66,5 +66,12 @@ public class Blob implements Serializable {
         return new String(contents);
     }
 
+    static void checkout(Commit commit, String filename) {
+        String hash = commit.blobs().get(filename);
+        Blob blob = readFromFile(hash);
+        writeContents(join(Repository.CWD, filename), blob.contents());
+//        commit.save();
+    }
+
 
 }
