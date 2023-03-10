@@ -69,8 +69,20 @@ public class Main {
                 String branch = args[1];
                 Repository.branch(branch);
                 break;
-            case "viewfile":
+            case "rm-branch":
+                validateRepository();
+                validateOperands(1, numOfOperands);
+                branch = args[1];
+                Repository.remove(branch);
+                break;
+            case "reset":
+                validateRepository();
+                validateOperands(1, numOfOperands);
                 String hash = args[1];
+                Repository.reset(hash);
+                break;
+            case "viewfile":
+                hash = args[1];
                 Blob b = Blob.read(hash);
                 System.out.println(new String(b.contents()));
                 break;

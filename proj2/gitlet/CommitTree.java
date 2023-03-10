@@ -41,9 +41,7 @@ public class CommitTree implements Serializable {
         branches.put(branch, commit);
         head = branches.get(branch);
 
-//        deleteFilesIn(Repository.CWD, StagingArea.filesForRemoval);
         StagingArea.clear();
-
     }
 
     public Commit head() {
@@ -101,7 +99,7 @@ public class CommitTree implements Serializable {
         System.out.println();
     }
 
-    public void find(String message) {
+    public static void find(String message) {
         List<String> hashes = getAllCommits();
         boolean found = false;
         for (String hash : hashes) {
@@ -141,28 +139,52 @@ public class CommitTree implements Serializable {
             exitWithMessage("No need to checkout the current branch.");
         }
 
-        Commit current = head;
         Commit other = branches.get(branch);
 
         if (other == null) {
             exitWithMessage("No such branch exists.");
         }
-        else if (!filesToBeOverwritten(current, other).isEmpty()) {
+        else if (!filesToBeOverwritten(head, other).isEmpty()) {
             exitWithMessage("There is an untracked file in the way; delete it, or add and commit it first.");
         }
         else {
-            Set<String> filesToBeDeleted = new TreeSet<>(current.blobs().keySet());
-            filesToBeDeleted.removeAll(other.blobs().keySet());
-            deleteFilesIn(Repository.CWD, new ArrayList<>(filesToBeDeleted));
-
-            for (String file : other.blobs().keySet()) {
-                Blob.checkout(other, file);
-            }
-
+            checkoutAllFilesIn(other);
             this.branch = branch;
             head = other;
             StagingArea.clear();
         }
+    }
+
+    public void newBranch(String branch) {
+        if (branches.containsKey(branch)) {
+            exitWithMessage("A branch with that name already exists.");
+        }
+        branches.put(branch, head);
+    }
+
+    public void removeBranch(String branch) {
+        if (this.branch.equals(branch)) {
+            exitWithMessage("Cannot remove the current branch.");
+        }
+        if (!branches.containsKey(branch)) {
+            exitWithMessage("A branch with that name does not exist.");
+        }
+        branches.remove(branch);
+    }
+
+    public void resetToCommit(String hash) {
+        if (!join(Commit.COMMITS_DIR, hash).exists()) {
+            exitWithMessage("No commit with that id exists.");
+        }
+
+        Commit commit = Commit.read(hash);
+        if (!filesToBeOverwritten(head, commit).isEmpty()) {
+            exitWithMessage("There is an untracked file in the way; delete it, or add and commit it first.");
+        }
+
+        checkoutAllFilesIn(commit);
+        branches.put(branch, commit);
+        head = commit;
     }
 
     private Set<String> filesToBeOverwritten(Commit from, Commit to) {
@@ -176,11 +198,14 @@ public class CommitTree implements Serializable {
         return commonFiles;
     }
 
-    public void newBranch(String branch) {
-        if (branches.containsKey(branch)) {
-            exitWithMessage("A branch with that name already exists.");
+    private void checkoutAllFilesIn(Commit commit) {
+        Set<String> filesToBeDeleted = new TreeSet<>(head.blobs().keySet());
+        filesToBeDeleted.removeAll(commit.blobs().keySet());
+        deleteFilesIn(Repository.CWD, new ArrayList<>(filesToBeDeleted));
+
+        for (String file : commit.blobs().keySet()) {
+            Blob.checkout(commit, file);
         }
-        branches.put(branch, head);
     }
 
     public static CommitTree read() {

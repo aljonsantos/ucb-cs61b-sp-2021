@@ -74,11 +74,21 @@ public class Repository {
     }
 
     public static void find(String message) {
-        tree.find(message);
+        CommitTree.find(message);
     }
 
     public static void branch(String branch) {
         tree.newBranch(branch);
+        tree.save();
+    }
+
+    public static void remove(String branch) {
+        tree.removeBranch(branch);
+        tree.save();
+    }
+
+    public static void reset(String hash) {
+        tree.resetToCommit(hash);
         tree.save();
     }
 
