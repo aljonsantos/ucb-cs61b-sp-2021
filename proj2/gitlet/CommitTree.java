@@ -122,17 +122,14 @@ public class CommitTree implements Serializable {
 //    }
 
     public void checkoutFileFromCommit(String hash, String filename) {
-        if (!join(Commit.COMMITS_DIR, hash).exists()) {
+        Commit commit = Commit.read(hash);
+        if (commit == null) {
             exitWithMessage("No commit with that id exists.");
         }
-
-        Commit commit = Commit.read(hash);
         if (!commit.containsBlob(filename)) {
             exitWithMessage("File does not exist in that commit.");
         }
-        else {
-            Blob.checkout(commit, filename);
-        }
+        Blob.checkout(commit, filename);
     }
 
     public void checkoutBranch(String branch) {
@@ -141,19 +138,17 @@ public class CommitTree implements Serializable {
         }
 
         Commit other = branches.get(branch);
-
         if (other == null) {
             exitWithMessage("No such branch exists.");
         }
-        else if (!filesToBeOverwritten(head, other).isEmpty()) {
+        if (!filesToBeOverwritten(head, other).isEmpty()) {
             exitWithMessage("There is an untracked file in the way; delete it, or add and commit it first.");
         }
-        else {
-            checkoutAllFilesIn(other);
-            this.branch = branch;
-            head = other;
-            StagingArea.clear();
-        }
+
+        checkoutAllFilesIn(other);
+        this.branch = branch;
+        head = other;
+        StagingArea.clear();
     }
 
     public void newBranch(String branch) {
@@ -174,11 +169,10 @@ public class CommitTree implements Serializable {
     }
 
     public void resetToCommit(String hash) {
-        if (!join(Commit.COMMITS_DIR, hash).exists()) {
+        Commit commit = Commit.read(hash);
+        if (commit == null) {
             exitWithMessage("No commit with that id exists.");
         }
-
-        Commit commit = Commit.read(hash);
         if (!filesToBeOverwritten(head, commit).isEmpty()) {
             exitWithMessage("There is an untracked file in the way; delete it, or add and commit it first.");
         }
@@ -191,9 +185,6 @@ public class CommitTree implements Serializable {
 
     private Set<String> filesToBeOverwritten(Commit from, Commit to) {
         Set<String> untrackedCWDFiles = new TreeSet<>(plainFilenamesIn(Repository.CWD));
-//        for (String file : plainFilenamesIn(Repository.CWD)) {
-//            untrackedCWDFiles.add(new Blob(Repository.CWD, file).hash());
-//        }
         untrackedCWDFiles.removeAll(from.blobs().keySet());
         Set<String> commonFiles = new TreeSet<>(to.blobs().keySet());
         commonFiles.retainAll(untrackedCWDFiles);

@@ -99,8 +99,31 @@ public class Commit implements Serializable {
     }
 
     public static Commit read(String hash) {
-        return readObject(join(COMMITS_DIR, hash), Commit.class);
+        List<String> lst = CommitTree.getAllCommits();
+
+        int n = 2;
+        List<String> matches = findStartsWith(hash.substring(0, n), lst);
+        while (matches.size() > 1 && n <= hash.length()) {
+            matches = findStartsWith(hash.substring(0, n), matches);
+            n += 2;
+        }
+
+        if (matches.isEmpty()) {
+            return null;
+        }
+        return readObject(join(COMMITS_DIR, matches.get(0)), Commit.class);
     }
+
+    private static List<String> findStartsWith(String hash, List<String> lst) {
+        List<String> matches = new ArrayList<>();
+        for (String file : lst) {
+            if (file.startsWith(hash)) {
+                matches.add(file);
+            }
+        }
+        return matches;
+    }
+
 
     public void save() {
         writeObject(join(COMMITS_DIR, this.hash),this);
