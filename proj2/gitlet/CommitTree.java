@@ -114,12 +114,12 @@ public class CommitTree implements Serializable {
         }
     }
 
-//    public void chekoutFile(String filename) {
-//        if (!head.containsBlob(filename)) {
-//            exitWithMessage("File does not exist in that commit.");
-//        }
-//        Blob.checkout(head, filename);
-//    }
+    public void checkoutFile(String filename) {
+        if (!head.containsBlob(filename)) {
+            exitWithMessage("File does not exist in that commit.");
+        }
+        Blob.checkout(head, filename);
+    }
 
     public void checkoutFileFromCommit(String hash, String filename) {
         Commit commit = Commit.read(hash);
@@ -185,15 +185,16 @@ public class CommitTree implements Serializable {
         checkoutAllFilesIn(commit);
         branches.put(branch, commit);
         head = commit;
+        StagingArea.clear();
     }
 
     private Set<String> filesToBeOverwritten(Commit from, Commit to) {
-        Set<String> untrackedCWDFiles = new TreeSet<>();
-        for (String file : plainFilenamesIn(Repository.CWD)) {
-            untrackedCWDFiles.add(new Blob(Repository.CWD, file).hash());
-        }
-        untrackedCWDFiles.removeAll(from.blobs().values());
-        Set<String> commonFiles = new TreeSet<>(to.blobs().values());
+        Set<String> untrackedCWDFiles = new TreeSet<>(plainFilenamesIn(Repository.CWD));
+//        for (String file : plainFilenamesIn(Repository.CWD)) {
+//            untrackedCWDFiles.add(new Blob(Repository.CWD, file).hash());
+//        }
+        untrackedCWDFiles.removeAll(from.blobs().keySet());
+        Set<String> commonFiles = new TreeSet<>(to.blobs().keySet());
         commonFiles.retainAll(untrackedCWDFiles);
         return commonFiles;
     }

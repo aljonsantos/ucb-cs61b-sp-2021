@@ -56,7 +56,7 @@ public class Repository {
 
         if (args.length == 3 && args[1].equals("--")) {
             filename = args[2];
-            tree.checkoutFileFromCommit(head.hash(), filename);
+            tree.checkoutFile(filename);
         }
         else if (args.length == 4 && args[2].equals("--")) {
             hash = args[1];
