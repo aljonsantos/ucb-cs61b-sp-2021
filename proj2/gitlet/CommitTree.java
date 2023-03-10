@@ -1,19 +1,15 @@
 package gitlet;
 
-// TODO: any imports you need here
+import java.io.File;
+import java.io.Serializable;
+import java.util.TreeMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static gitlet.Utils.*;
 
-import java.io.File;
-import java.io.Serializable;
-import java.util.*;
-
-/** Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
- *
- *  @author TODO
- */
 public class CommitTree implements Serializable {
     public static final File TREE = join(Repository.GITLET_DIR, "metadata");
     static final String DEFAULT_BRANCH = "master";
@@ -21,37 +17,18 @@ public class CommitTree implements Serializable {
     private String branch;
     private TreeMap<String, Commit> branches;
 
-
-//    public CommitTree() {
-//        head = createInitialCommit();
-//        branches = new HashMap<>();
-//        branches.put(INIT_BRANCH, head.hash());
-//        branch = INIT_BRANCH;
-//    }
-
-    public void initialize() {
+    public CommitTree() {
         Commit initialCommit = new Commit();
         initialCommit.save();
 
-//        head = initialCommit;
         branches = new TreeMap<>();
         branches.put(DEFAULT_BRANCH, initialCommit);
         branch = DEFAULT_BRANCH;
         head = branches.get(branch);
     }
 
-//    private Commit createInitialCommit() {
-//        Commit commit = new Commit();
-//        commit.save();
-//        return commit;
-//    }
-
-
     public void newCommit(String message) {
-        List<String> filesForAddition = StagingArea.getFilesForAddtion();
-        List<String> filesForRemoval = StagingArea.getFilesForRemoval();
-
-        if (filesForAddition.isEmpty() && filesForRemoval.isEmpty()) {
+        if (StagingArea.filesForAddition.isEmpty() && StagingArea.filesForRemoval.isEmpty()) {
             exitWithMessage("No changes added to the commit.");
         }
         if (message.equals("")) {
@@ -59,31 +36,15 @@ public class CommitTree implements Serializable {
         }
 
         Commit commit = new Commit(message);
-        commit.setBlobs(filesForAddition, filesForRemoval);
-        commit.setHash();
         commit.save();
 
         branches.put(branch, commit);
         head = branches.get(branch);
 
+//        deleteFilesIn(Repository.CWD, StagingArea.filesForRemoval);
         StagingArea.clear();
+
     }
-//    public void moveHead(Commit commit) {
-//        this.head = commit;
-//    }
-
-//    public void setHead(Commit commit) {
-//        head = commit.hash();
-//    }
-
-
-    public void save() {
-        // call on commit command
-        writeObject(TREE,this);
-//        Commit.readFromFile(head).save();
-    }
-
-
 
     public Commit head() {
         return this.head;
@@ -102,55 +63,14 @@ public class CommitTree implements Serializable {
         List<String> hashes = getAllCommits();
         if (hashes != null) {
             for (String hash : hashes) {
-                System.out.println(Commit.readFromFile(hash));
+                System.out.println(Commit.read(hash));
             }
         }
     }
-
-//    public static void printLog(Commit commit) {
-//        System.out.println("===");
-//        System.out.println(commit);
-//        System.out.println();
-//    }
 
     public static List<String> getAllCommits() {
         return plainFilenamesIn(Commit.COMMITS_DIR);
     }
-
-//    public static List<String> getAllCommits(String message) {
-//        List<String> hashes = plainFilenamesIn(CommitTree.COMMITS_DIR);
-//        if (hashes == null) {
-//            return null;
-//        }
-//        List<Commit> commits = new ArrayList<>();
-//        for (String hash : hashes) {
-//            Commit commit = Commit.readFromFile(hash);
-//            if (commit.message().equals(message)) {
-//                commits.add(commit);
-//            }
-//        }
-//        return commits;
-//    }
-
-    public static void find(String message) {
-        List<String> hashes = getAllCommits();
-        boolean found = false;
-        for (String hash : hashes) {
-            Commit commit = Commit.readFromFile(hash);
-            if (commit.message().equals(message)) {
-                System.out.println(commit.hash());
-            }
-            found = true;
-        }
-        if (!found) {
-            exitWithMessage("Found no commit with that message.");
-        }
-    }
-
-    public List<String> branches() {
-        return new ArrayList<>(branches.keySet());
-    }
-
 
     public void printStatus() {
         System.out.println("=== Branches ===");
@@ -163,13 +83,13 @@ public class CommitTree implements Serializable {
         System.out.println();
 
         System.out.println("=== Staged Files ===");
-        for (String file : StagingArea.getFilesForAddtion()) {
+        for (String file : StagingArea.filesForAddition) {
             System.out.println(file);
         }
         System.out.println();
 
         System.out.println("=== Removed Files ===");
-        for (String file : StagingArea.getFilesForRemoval()) {
+        for (String file : StagingArea.filesForRemoval) {
             System.out.println(file);
         }
         System.out.println();
@@ -179,19 +99,32 @@ public class CommitTree implements Serializable {
 
         System.out.println("=== Untracked Files ===");
         System.out.println();
-
-
     }
 
-    public void chekoutFile(String filename) {
-        if (!head.containsBlob(filename)) {
-            exitWithMessage("File does not exist in that commit.");
+    public void find(String message) {
+        List<String> hashes = getAllCommits();
+        boolean found = false;
+        for (String hash : hashes) {
+            Commit commit = Commit.read(hash);
+            if (commit.message().equals(message)) {
+                System.out.println(commit.hash());
+                found = true;
+            }
         }
-        Blob.checkout(head, filename);
+        if (!found) {
+            exitWithMessage("Found no commit with that message.");
+        }
     }
+
+//    public void chekoutFile(String filename) {
+//        if (!head.containsBlob(filename)) {
+//            exitWithMessage("File does not exist in that commit.");
+//        }
+//        Blob.checkout(head, filename);
+//    }
 
     public void checkoutFileFromCommit(String hash, String filename) {
-        Commit commit = Commit.readFromFile(hash);
+        Commit commit = Commit.read(hash);
         if (commit == null) {
             exitWithMessage("No commit with that id exists.");
         }
@@ -207,47 +140,38 @@ public class CommitTree implements Serializable {
         if (branch.equals(this.branch)) {
             exitWithMessage("No need to checkout the current branch.");
         }
-        Commit commit = branches.get(branch);
-        if (commit == null) {
+
+        Commit current = head;
+        Commit other = branches.get(branch);
+
+        if (other == null) {
             exitWithMessage("No such branch exists.");
         }
-        else if (!filesToBeOverwritten().isEmpty()) {
+        else if (!filesToBeOverwritten(current, other).isEmpty()) {
             exitWithMessage("There is an untracked file in the way; delete it, or add and commit it first.");
         }
         else {
-            // delete files in cwd
-//            deleteAllFilesIn(Repository.CWD);
-            Set<String> filesToBeDeleted = new TreeSet<>(head.blobs().keySet());
-            filesToBeDeleted.removeAll(branches.get(branch).blobs().keySet());
-
-            System.out.println("files to be deleted");
-            for (String file : new ArrayList<>(filesToBeDeleted)) {
-                System.out.println(file);
-            }
-
+            Set<String> filesToBeDeleted = new TreeSet<>(current.blobs().keySet());
+            filesToBeDeleted.removeAll(other.blobs().keySet());
             deleteFilesIn(Repository.CWD, new ArrayList<>(filesToBeDeleted));
-            // bring branch files to cwd
-            for (String key : branches.get(branch).blobs().keySet()) {
-                Blob.checkout(commit, key);
+
+            for (String file : other.blobs().keySet()) {
+                Blob.checkout(other, file);
             }
 
             this.branch = branch;
-            head = branches.get(this.branch);
+            head = other;
             StagingArea.clear();
         }
     }
 
-    private Set<String> filesToBeOverwritten() {
-        // get files in cwd that are not in staged and check if they are in commit
-        // get files in folder1 that are not in folder2 and check if they are in folder3
-        Set<String> untrackedCWDFiles = new TreeSet<>(plainFilenamesIn(Repository.CWD));
-        untrackedCWDFiles.removeAll(head.blobs().keySet());
-
-//        for (String file : new ArrayList<>(untrackedCWDFiles)) {
-//            System.out.println(file);
-//        }
-
-        Set<String> commonFiles = new TreeSet<>(branches.get(branch).blobs().keySet());
+    private Set<String> filesToBeOverwritten(Commit from, Commit to) {
+        Set<String> untrackedCWDFiles = new TreeSet<>();
+        for (String file : plainFilenamesIn(Repository.CWD)) {
+            untrackedCWDFiles.add(new Blob(Repository.CWD, file).hash());
+        }
+        untrackedCWDFiles.removeAll(from.blobs().values());
+        Set<String> commonFiles = new TreeSet<>(to.blobs().values());
         commonFiles.retainAll(untrackedCWDFiles);
         return commonFiles;
     }
@@ -259,5 +183,12 @@ public class CommitTree implements Serializable {
         branches.put(branch, head);
     }
 
+    public static CommitTree read() {
+        return readObject(TREE, CommitTree.class);
+    }
+
+    public void save() {
+        writeObject(TREE,this);
+    }
 
 }
