@@ -114,19 +114,20 @@ public class CommitTree implements Serializable {
         }
     }
 
-    public void checkoutFile(String filename) {
-        if (!head.containsBlob(filename)) {
-            exitWithMessage("File does not exist in that commit.");
-        }
-        Blob.checkout(head, filename);
-    }
+//    public void checkoutFile(String filename) {
+//        if (!head.containsBlob(filename)) {
+//            exitWithMessage("File does not exist in that commit.");
+//        }
+//        Blob.checkout(head, filename);
+//    }
 
     public void checkoutFileFromCommit(String hash, String filename) {
-        Commit commit = Commit.read(hash);
-        if (commit == null) {
+        if (!join(Commit.COMMITS_DIR, hash).exists()) {
             exitWithMessage("No commit with that id exists.");
         }
-        else if (!commit.containsBlob(filename)) {
+
+        Commit commit = Commit.read(hash);
+        if (!commit.containsBlob(filename)) {
             exitWithMessage("File does not exist in that commit.");
         }
         else {
