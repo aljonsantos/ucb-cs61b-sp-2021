@@ -18,7 +18,7 @@ public class CommitTree implements Serializable {
     private TreeMap<String, Commit> branches;
 
     public CommitTree() {
-        Commit initialCommit = new Commit();
+        Commit initialCommit = Commit.createIntialCommit();
         initialCommit.save();
 
         branches = new TreeMap<>();
@@ -35,7 +35,7 @@ public class CommitTree implements Serializable {
             exitWithMessage("Please enter a commit message.");
         }
 
-        Commit commit = new Commit(message);
+        Commit commit = Commit.createCommit(message);
         commit.save();
 
         branches.put(branch, commit);
@@ -53,7 +53,7 @@ public class CommitTree implements Serializable {
         while (p != null) {
             System.out.println(p);
 //            p.printBlobs();
-            p = p.parent();
+            p = p.parents().get(0);
         }
     }
 

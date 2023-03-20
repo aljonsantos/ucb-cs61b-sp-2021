@@ -13,23 +13,34 @@ public class Commit implements Serializable {
     private String hash;
     private String message;
     private Date timestamp;
-    private Commit parent;
+    private List<Commit> parents;
     private HashMap<String, String> blobs;
 
-    public Commit() {
-        this.message = "initial commit";
-        this.timestamp = new Date(0L);
-        this.parent = null;
+    public Commit(String message, Date date, Commit... parents) {
+        this.message = message;
+        this.timestamp = date;
+        this.parents = Arrays.asList(parents);
         this.blobs = new HashMap<>();
-        this.hash = generateHash();
     }
 
-    public Commit(String message) {
-        this.message = message;
-        this.timestamp = new Date();
-        this.parent = head;
-        this.blobs = configureBlobs();
-        this.hash = generateHash();
+    public static Commit createIntialCommit() {
+        Commit commit = new Commit("initial commit", new Date(0L), (Commit) null);
+        commit.setHash();
+        return commit;
+    }
+
+    public static Commit createCommit(String message) {
+        Commit commit = new Commit(message, new Date(), head);
+        commit.setBlobs(generateCommitBlobs(commit));
+        commit.setHash();
+        return commit;
+    }
+
+    public static Commit createMergeCommit(String message, Commit other) {
+        Commit commit = new Commit(message, new Date(), head, other);
+        // my blobs??
+        commit.setHash();
+        return commit;
     }
 
     public String hash() {
@@ -40,8 +51,8 @@ public class Commit implements Serializable {
         return this.message;
     }
 
-    public Commit parent() {
-        return this.parent;
+    public List<Commit> parents() {
+        return this.parents;
     }
 
     public HashMap<String, String> blobs() {
@@ -60,16 +71,21 @@ public class Commit implements Serializable {
         return blobs.get(filename);
     }
 
-    public String generateHash() {
-        return sha1(serialize(this));
+    public void setHash() {
+        this.hash = sha1(serialize(this));
+    }
+
+    public void setBlobs(HashMap<String, String> blobs) {
+        this.blobs = blobs;
     }
 
     public boolean containsBlob(String filename) {
         return blobs.containsKey(filename);
     }
 
-    public HashMap<String, String> configureBlobs() {
-        HashMap<String, String> blobs = Blob.copyBlobs(parent);
+
+    public static HashMap<String, String> generateCommitBlobs(Commit commit) {
+        HashMap<String, String> blobs = Blob.copyBlobs(commit.parents.get(0));
 //        System.out.println("files add:");
         for (String filename : StagingArea.filesForAddition) {
             if (!StagingArea.filesForRemoval.contains(filename)) {
@@ -124,6 +140,14 @@ public class Commit implements Serializable {
         return matches;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Commit) {
+            Commit other = (Commit) obj;
+            return other.hash().equals(this.hash);
+        }
+        return false;
+    }
 
     public void save() {
         writeObject(join(COMMITS_DIR, this.hash),this);
