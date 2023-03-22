@@ -2,11 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.TreeMap;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import static gitlet.Utils.*;
 
@@ -28,7 +24,7 @@ public class CommitTree implements Serializable {
     }
 
     public void newCommit(String message) {
-        if (StagingArea.filesForAddition.isEmpty() && StagingArea.filesForRemoval.isEmpty()) {
+        if (StagingArea.filesForAddition().isEmpty() && StagingArea.filesForRemoval().isEmpty()) {
             exitWithMessage("No changes added to the commit.");
         }
         if (message.equals("")) {
@@ -52,7 +48,6 @@ public class CommitTree implements Serializable {
         Commit p = head;
         while (p != null) {
             System.out.println(p);
-//            p.printBlobs();
             p = p.parents().get(0);
         }
     }
@@ -81,13 +76,13 @@ public class CommitTree implements Serializable {
         System.out.println();
 
         System.out.println("=== Staged Files ===");
-        for (String file : StagingArea.filesForAddition) {
+        for (String file : StagingArea.filesForAddition()) {
             System.out.println(file);
         }
         System.out.println();
 
         System.out.println("=== Removed Files ===");
-        for (String file : StagingArea.filesForRemoval) {
+        for (String file : StagingArea.filesForRemoval()) {
             System.out.println(file);
         }
         System.out.println();
@@ -113,13 +108,6 @@ public class CommitTree implements Serializable {
             exitWithMessage("Found no commit with that message.");
         }
     }
-
-//    public void checkoutFile(String filename) {
-//        if (!head.containsBlob(filename)) {
-//            exitWithMessage("File does not exist in that commit.");
-//        }
-//        Blob.checkout(head, filename);
-//    }
 
     public void checkoutFileFromCommit(String hash, String filename) {
         Commit commit = Commit.read(hash);
@@ -199,6 +187,121 @@ public class CommitTree implements Serializable {
         for (String file : commit.blobs().keySet()) {
             Blob.checkout(commit, file);
         }
+    }
+
+    public void mergeBranch(String branch) {
+        if (Repository.tree.branch().equals(branch)) {
+            exitWithMessage("Cannot merge a branch with itself.");
+        }
+        if (!branches.containsKey(branch)) {
+            exitWithMessage("A branch with that name does not exist.");
+        }
+        if (!StagingArea.filesForAddition().isEmpty() || !StagingArea.filesForRemoval().isEmpty()) {
+            exitWithMessage("You have uncommitted changes.");
+        }
+
+        Commit other = branches.get(branch);
+        Commit split = findSplitPoint(head, other);
+
+        if (split.equals(other)) {
+            exitWithMessage("Given branch is an ancestor of the current branch.");
+        }
+        if (split.equals(head)) {
+            checkoutBranch(branch);
+            exitWithMessage("Current branch fast-forwarded.");
+        }
+
+        Set<String> mergeFiles = new TreeSet<>(split.blobs().keySet());
+        mergeFiles.addAll(head.blobs().keySet());
+        mergeFiles.addAll(other.blobs().keySet());
+
+        boolean isMergeConflict = false;
+        HashMap<String, Commit> filesToCheckout = new HashMap<>();
+        List<String> filesToRemove = new ArrayList<>();
+        HashMap<String, String> conflictFiles = new HashMap<>();
+
+        for (String file : mergeFiles) {
+            if (Blob.isModified(file, split, head) && Blob.isModified(file, split, other) && Blob.isModified(file, head, other)) {
+                isMergeConflict = true;
+                String headContents = head.containsBlob(file) ? new String(Blob.read(head.blobHash(file)).contents()) : "";
+                String otherContents = other.containsBlob(file) ? new String(Blob.read(other.blobHash(file)).contents()) : "";
+
+                String contents = String.format("<<<<<<< HEAD\n%s=======\n%s>>>>>>>\n", headContents, otherContents);
+                conflictFiles.put(file, contents);
+
+            } else if (split.containsBlob(file)) {
+                if (!Blob.isModified(file, split, head)) {
+                    if (!other.containsBlob(file)) {
+                        filesToRemove.add(file); // case d
+                    } else if (Blob.isModified(file, split, other)) { // case a
+                        filesToCheckout.put(file, other);
+                    }
+                }
+            } else if (!head.containsBlob(file)) {
+                filesToCheckout.put(file, other);
+            }
+        }
+
+        Set<String> filesToBeOverwritten = new TreeSet<>(plainFilenamesIn(Repository.CWD));
+        filesToBeOverwritten.removeAll(head.blobs().keySet());
+        filesToBeOverwritten.retainAll(filesToCheckout.keySet());
+
+        if (!filesToBeOverwritten.isEmpty()) {
+            exitWithMessage("There is an untracked file in the way; delete it, or add and commit it first.");
+        }
+
+        for (String file : filesToRemove) {
+            StagingArea.remove(file);
+        }
+        for (String file : filesToCheckout.keySet()) {
+            checkoutFileFromCommit(filesToCheckout.get(file).hash(), file);
+            StagingArea.add(file);
+        }
+        for (String file : conflictFiles.keySet()) {
+            writeContents(join(Repository.CWD, file), conflictFiles.get(file));
+            StagingArea.add(file);
+        }
+
+        Commit commit = Commit.createMergeCommit(branch);
+        commit.configBlobs();
+        commit.setHash();
+        commit.save();
+
+        StagingArea.clear();
+
+        if (isMergeConflict) {
+            System.out.println("Encountered a merge conflict.");
+        }
+
+        branches.put(Repository.tree.branch(), commit);
+        head = commit;
+
+    }
+
+    private Commit findSplitPoint(Commit b1, Commit b2) {
+        Set<String> b1CommitHistory = new TreeSet<>();
+        while (b1 != null) {
+            b1CommitHistory.add(b1.hash());
+            if (b1.parents().size() > 1) {
+                b1CommitHistory.add(b1.parents().get(1).hash());
+            }
+            b1 = b1.parent();
+        }
+        while (b2 != null) {
+            if (b1CommitHistory.contains(b2.hash())) {
+                return Commit.read(b2.hash());
+            }
+            b2 = b2.parent();
+        }
+        return null;
+    }
+
+    public String branch() {
+        return this.branch;
+    }
+
+    public TreeMap<String, Commit> branches() {
+        return this.branches;
     }
 
     public static CommitTree read() {

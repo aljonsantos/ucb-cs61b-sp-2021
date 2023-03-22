@@ -14,7 +14,6 @@ public class Repository {
         if (isInitialized()) {
             tree = CommitTree.read();
             head = tree.head();
-            StagingArea.read();
         }
     }
 
@@ -89,6 +88,11 @@ public class Repository {
 
     public static void reset(String hash) {
         tree.resetToCommit(hash);
+        tree.save();
+    }
+
+    public static void merge(String branch) {
+        tree.mergeBranch(branch);
         tree.save();
     }
 

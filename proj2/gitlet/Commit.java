@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
+import static gitlet.Repository.tree;
 import static gitlet.Utils.*;
 
 import static gitlet.Repository.head;
@@ -20,7 +21,7 @@ public class Commit implements Serializable {
         this.message = message;
         this.timestamp = date;
         this.parents = Arrays.asList(parents);
-        this.blobs = new HashMap<>();
+        this.blobs = Blob.copyBlobs(this.parent());
     }
 
     public static Commit createIntialCommit() {
@@ -31,16 +32,15 @@ public class Commit implements Serializable {
 
     public static Commit createCommit(String message) {
         Commit commit = new Commit(message, new Date(), head);
-        commit.setBlobs(generateCommitBlobs(commit));
+        commit.configBlobs();
         commit.setHash();
         return commit;
     }
 
-    public static Commit createMergeCommit(String message, Commit other) {
-        Commit commit = new Commit(message, new Date(), head, other);
-        // my blobs??
-        commit.setHash();
-        return commit;
+    public static Commit createMergeCommit(String branch) {
+        String message = String.format("Merged %s into %s.", branch, tree.branch());
+        return new Commit(message, new Date(), head, tree.branches().get(branch));
+//        return commit;
     }
 
     public String hash() {
@@ -53,6 +53,10 @@ public class Commit implements Serializable {
 
     public List<Commit> parents() {
         return this.parents;
+    }
+
+    public Commit parent() {
+        return parents.get(0);
     }
 
     public HashMap<String, String> blobs() {
@@ -84,34 +88,38 @@ public class Commit implements Serializable {
     }
 
 
-    public static HashMap<String, String> generateCommitBlobs(Commit commit) {
-        HashMap<String, String> blobs = Blob.copyBlobs(commit.parents.get(0));
-//        System.out.println("files add:");
-        for (String filename : StagingArea.filesForAddition) {
-            if (!StagingArea.filesForRemoval.contains(filename)) {
-//                System.out.println(filename);
+    public void configBlobs() {
+        List<String> filesForAddition = StagingArea.filesForAddition();
+        List<String> filesForRemoval = StagingArea.filesForRemoval();
+        for (String filename : filesForAddition) {
+            if (!filesForRemoval.contains(filename)) {
                 Blob blob = new Blob(StagingArea.ADDITION_DIR, filename);
                 blobs.put(filename, blob.hash());
                 blob.save();
             }
         }
-//        System.out.println("file remove:");
-        for (String filename : StagingArea.filesForRemoval) {
-//            System.out.println(filename);
+        for (String filename : filesForRemoval) {
             blobs.remove(filename);
         }
-        return blobs;
     }
 
     @Override
     public String toString() {
-        return String.format("===\ncommit %s\nDate: %s\n%s\n", hash, formatDate(timestamp), message);
+        if (parents.size() == 1) {
+            return String.format("===\ncommit %s\nDate: %s\n%s\n", hash, formatDate(timestamp), message);
+        }
+        String parents = String.format("%s %s", this.parents.get(0).shortHash(), this.parents.get(1).shortHash());
+        return String.format("===\ncommit %s\nMerge: %s\nDate: %s\n%s\n", hash, parents, formatDate(timestamp), message);
     }
 
     private String formatDate(Date date) {
         Formatter formatter = new Formatter();
         formatter.format("%1$ta %1$tb %1$td %1$tT %1$tY %1$tz", date);
         return formatter.toString();
+    }
+
+    private String shortHash() {
+        return hash.substring(0, 7);
     }
 
     public static Commit read(String hash) {

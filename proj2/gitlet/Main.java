@@ -81,10 +81,11 @@ public class Main {
                 String hash = args[1];
                 Repository.reset(hash);
                 break;
-            case "viewfile":
-                hash = args[1];
-                Blob b = Blob.read(hash);
-                System.out.println(new String(b.contents()));
+            case "merge":
+                validateRepository();
+                validateOperands(1, numOfOperands);
+                branch = args[1];
+                Repository.merge(branch);
                 break;
             default:
                 Utils.exitWithMessage("No command with that name exists.");

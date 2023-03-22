@@ -11,12 +11,13 @@ public class StagingArea {
     public static final File STAGING_DIR = join(Repository.GITLET_DIR, "staging");
     public static final File ADDITION_DIR = join(STAGING_DIR, "addition");
     public static final File REMOVAL_DIR = join(STAGING_DIR, "removal");
-    static List<String> filesForAddition;
-    static List<String> filesForRemoval;
 
-    public static void read() {
-        filesForAddition = plainFilenamesIn(ADDITION_DIR);
-        filesForRemoval = plainFilenamesIn(REMOVAL_DIR);
+    public static List<String> filesForAddition() {
+        return plainFilenamesIn(ADDITION_DIR);
+    }
+
+    public static List<String> filesForRemoval() {
+        return plainFilenamesIn(REMOVAL_DIR);
     }
 
     public static void add(String filename) {
